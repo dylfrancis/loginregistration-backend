@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './schemas/users.schema';
@@ -17,6 +21,13 @@ export class UsersService {
   async signUp(signUpDto: SignUpDto): Promise<{ token: string }> {
     const { username, password } = signUpDto;
 
+    const checkUser = await this.userModel.findOne({ username });
+    if (checkUser) {
+      throw new BadRequestException('Username already taken', {
+        cause: new Error(),
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await this.userModel.create({
@@ -29,14 +40,16 @@ export class UsersService {
     return { token };
   }
 
-  async login(loginDto: SignUpDto): Promise<{ token: string }> {
-    const { username, password } = loginDto;
-
+  async login(username: string, password: string): Promise<{ token: string }> {
     const user = await this.userModel.findOne({ username });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid username or password');
+    }
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);
 
-    if (!user || !isPasswordMatch) {
+    if (!isPasswordMatch) {
       throw new UnauthorizedException('Invalid username or password');
     }
 

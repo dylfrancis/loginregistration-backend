@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { SignUpDto } from './dto/signUp.dto';
 import { UsersService } from './users.service';
 
@@ -12,7 +12,10 @@ export class UsersController {
   }
 
   @Get('/login')
-  login(@Body() signUpDto: SignUpDto): Promise<{ token: string }> {
-    return this.usersService.login(signUpDto);
+  login(
+    @Query('username') username: string,
+    @Query('password') password: string,
+  ): Promise<{ token: string }> {
+    return this.usersService.login(username, password);
   }
 }
